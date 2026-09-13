@@ -6,7 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 import '../models/motion_sample.dart';
-import 'fall_detector.dart';
+import 'ml_fall_detector.dart';
 import 'notification_service.dart';
 
 const String fallEventChannel = 'fall_detected';
@@ -32,7 +32,8 @@ Future<void> initBackgroundService() async {
 void _onServiceStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
 
-  final fallDetector = FallDetector();
+  final fallDetector = MlFallDetector();
+  await fallDetector.load();
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   await flutterLocalNotificationsPlugin
@@ -62,32 +63,32 @@ void _onServiceStart(ServiceInstance service) async {
     });
   });
 
-  void maybeProcessSample() {
-    if (latestAccel == null || latestGyro == null) return;
-    final sample = MotionSample(
-      timestamp: DateTime.now(),
-      accelMagnitude: MotionSample.magnitude(
-          latestAccel!.x, latestAccel!.y, latestAccel!.z),
-      gyroMagnitude:
-          MotionSample.magnitude(latestGyro!.x, latestGyro!.y, latestGyro!.z),
-    );
-    fallDetector.addSample(sample);
-  }
-
   final accelSub = accelerometerEventStream(
     samplingPeriod: SensorInterval.gameInterval,
-  ).listen((event) {
-    latestAccel = event;
-    maybeProcessSample();
-  });
+  ).listen((event) => latestAccel = event);
 
   final gyroSub = gyroscopeEventStream(
     samplingPeriod: SensorInterval.gameInterval,
-  ).listen((event) {
-    latestGyro = event;
-  });
+  ).listen((event) => latestGyro = event);
+
+  // Sample at a fixed 50Hz cadence so the sliding window matches the rate
+  // the model was trained on, regardless of how often sensor events arrive.
+  final samplingTimer = Timer.periodic(
+    const Duration(milliseconds: MlFallDetector.sampleIntervalMs),
+    (_) {
+      final accel = latestAccel;
+      final gyro = latestGyro;
+      if (accel == null || gyro == null) return;
+      fallDetector.addSample(
+        accelMagnitude: MotionSample.magnitude(accel.x, accel.y, accel.z),
+        gyroMagnitude: MotionSample.magnitude(gyro.x, gyro.y, gyro.z),
+        timestamp: DateTime.now(),
+      );
+    },
+  );
 
   service.on('stopService').listen((event) async {
+    samplingTimer.cancel();
     await accelSub.cancel();
     await gyroSub.cancel();
     fallDetector.dispose();

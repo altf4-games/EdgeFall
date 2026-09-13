@@ -23,3 +23,10 @@ key.properties
 
 # macOS
 .DS_Store
+
+# Python / model training
+training/.venv/
+training/data/
+training/output/
+__pycache__/
+*.pyc
