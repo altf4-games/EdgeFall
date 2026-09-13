@@ -53,32 +53,41 @@ class _MonitorPageState extends State<MonitorPage> {
   void initState() {
     super.initState();
     _subscribeToRawSensors();
-    _fallSub = FlutterBackgroundService()
-        .on(fallEventChannel)
-        .listen(_onFallDetected);
-    FlutterBackgroundService().isRunning().then((running) {
-      if (mounted) setState(() => _monitoring = running);
-    });
+    try {
+      _fallSub = FlutterBackgroundService()
+          .on(fallEventChannel)
+          .listen(_onFallDetected);
+      FlutterBackgroundService().isRunning().then((running) {
+        if (mounted) setState(() => _monitoring = running);
+      });
+    } catch (_) {
+      // Background service plugin unavailable (e.g. running in a test host).
+    }
   }
 
   void _subscribeToRawSensors() {
-    _accelSub = accelerometerEventStream(
-      samplingPeriod: SensorInterval.uiInterval,
-    ).listen((event) {
-      if (!mounted) return;
-      setState(() {
-        _accelMagnitude =
-            MotionSample.magnitude(event.x, event.y, event.z);
+    try {
+      _accelSub = accelerometerEventStream(
+        samplingPeriod: SensorInterval.uiInterval,
+      ).listen((event) {
+        if (!mounted) return;
+        setState(() {
+          _accelMagnitude =
+              MotionSample.magnitude(event.x, event.y, event.z);
+        });
       });
-    });
-    _gyroSub = gyroscopeEventStream(
-      samplingPeriod: SensorInterval.uiInterval,
-    ).listen((event) {
-      if (!mounted) return;
-      setState(() {
-        _gyroMagnitude = MotionSample.magnitude(event.x, event.y, event.z);
+      _gyroSub = gyroscopeEventStream(
+        samplingPeriod: SensorInterval.uiInterval,
+      ).listen((event) {
+        if (!mounted) return;
+        setState(() {
+          _gyroMagnitude =
+              MotionSample.magnitude(event.x, event.y, event.z);
+        });
       });
-    });
+    } catch (_) {
+      // Sensor plugin unavailable (e.g. running in a test host).
+    }
   }
 
   void _onFallDetected(Map<String, dynamic>? event) {
