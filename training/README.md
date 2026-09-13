@@ -61,3 +61,27 @@ If you change `WINDOW_SIZE`, `NORM_SCALE`, or the feature set in
 `prepare_dataset.py`/`train.py`, mirror those constants exactly in
 `lib/services/ml_fall_detector.dart` — the model expects input on the exact
 scale it was trained on.
+
+## Known false positives
+
+SisFall's fall trials were performed onto a padded mattress for the
+subjects' safety (see the dataset paper). That means the model learned
+"impact after free-fall, followed by stillness" from falls that were
+themselves cushioned — so a bare phone free-falling out of a hand and
+landing on a soft surface (a bed, a couch) can produce an accel/jerk profile
+close enough to a real fall that the classifier fires. This is a genuine gap
+between the training distribution and the deployment sensor (a body-worn
+accelerometer vs. a phone in a pocket/hand), not just a threshold-tuning
+problem.
+
+Mitigations currently in place (`lib/services/ml_fall_detector.dart`):
+- `positiveThreshold` raised to 0.95 (from the 0.9 used during initial
+  training sweeps) to demand higher confidence before alerting.
+- `cooldown` (10s) so one physical fall event can't fire repeated alerts as
+  the sliding window passes over it multiple times.
+
+If false positives from soft-surface drops are still too frequent, the real
+fix is collecting a small set of "phone alone dropped on various surfaces"
+negative recordings (a few hundred windows is enough) and fine-tuning on
+those as hard negatives — SisFall alone can't teach the model this
+distinction since it never saw an unworn phone drop.

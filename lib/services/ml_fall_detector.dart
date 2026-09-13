@@ -20,13 +20,24 @@ class MlFallDetector {
   // accel_mag [m/s^2], gyro_mag [rad/s], jerk [m/s^3]
   static const List<double> normScale = [30.0, 10.0, 500.0];
 
-  static const double positiveThreshold = 0.9;
+  // Raised from the 0.9/93.3% training default after real-device testing
+  // showed a bare phone dropped onto a soft surface (e.g. a bed) can produce
+  // an accel/jerk signature close to a body fall onto SisFall's padded test
+  // mats. See training/README.md's "false positives" note before lowering
+  // this back down.
+  static const double positiveThreshold = 0.95;
   static const int consecutivePositivesRequired = 2;
+
+  // A single fall spans many overlapping windows, so without a cooldown the
+  // same fall fires several alerts in a row. Once triggered, stay silent for
+  // this long before a new fall can be reported.
+  static const Duration cooldown = Duration(seconds: 10);
 
   final Queue<List<double>> _window = Queue<List<double>>();
   double? _previousAccelMag;
   int _samplesSinceInference = 0;
   int _consecutivePositives = 0;
+  DateTime? _cooldownUntil;
 
   Interpreter? _interpreter;
 
@@ -59,6 +70,12 @@ class MlFallDetector {
     }
     if (_window.length < windowSize) return;
 
+    if (_cooldownUntil != null) {
+      if (timestamp.isBefore(_cooldownUntil!)) return;
+      _cooldownUntil = null;
+      _consecutivePositives = 0;
+    }
+
     _samplesSinceInference++;
     if (_samplesSinceInference < inferenceStrideSamples) return;
     _samplesSinceInference = 0;
@@ -68,6 +85,7 @@ class MlFallDetector {
       _consecutivePositives++;
       if (_consecutivePositives >= consecutivePositivesRequired) {
         _consecutivePositives = 0;
+        _cooldownUntil = timestamp.add(cooldown);
         _controller.add(FallEvent(timestamp));
       }
     } else {
