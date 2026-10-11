@@ -48,11 +48,14 @@ def confusion(y, p, thr):
     return tp, fp, fn, tn
 
 
-def plot_confusion(ax, tp, fp, fn, tn, thr):
+def plot_confusion(ax, tp, fp, fn, tn, thr, normalize=False):
     cm = np.array([[tn, fp], [fn, tp]])
-    ax.imshow(cm, cmap="Blues")
+    if normalize:  # row-normalize: each row (actual class) sums to 1
+        cm = cm / cm.sum(axis=1, keepdims=True)
+    ax.imshow(cm, cmap="Blues", vmin=0, vmax=1 if normalize else None)
     for (r, c), v in np.ndenumerate(cm):
-        ax.text(c, r, str(v), ha="center", va="center", fontsize=13,
+        ax.text(c, r, f"{v:.1%}" if normalize else str(v), ha="center",
+                va="center", fontsize=13,
                 color="white" if v > cm.max() / 2 else "black")
     ax.set_xticks([0, 1], ["ADL", "Fall"])
     ax.set_yticks([0, 1], ["ADL", "Fall"])
@@ -102,6 +105,15 @@ def main() -> None:
     fig.suptitle("Confusion matrices (held-out test subjects, TFLite model)")
     fig.tight_layout()
     fig.savefig(RESULTS_DIR / "confusion_matrices.png", dpi=150)
+    plt.close(fig)
+
+    # Row-normalized (per actual class): diagonal = recall / specificity
+    fig, axes = plt.subplots(1, len(THRESHOLDS), figsize=(4.2 * len(THRESHOLDS), 4))
+    for ax, thr in zip(axes, THRESHOLDS):
+        plot_confusion(ax, *confusion(y_test, p, thr), thr, normalize=True)
+    fig.suptitle("Normalized confusion matrices (rows sum to 100%)")
+    fig.tight_layout()
+    fig.savefig(RESULTS_DIR / "confusion_matrices_normalized.png", dpi=150)
     plt.close(fig)
 
     # ROC + PR curves with the operating points marked
