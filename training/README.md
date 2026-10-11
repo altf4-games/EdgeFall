@@ -49,6 +49,12 @@ class-weighted loss to correct for the fall/ADL imbalance (~1.8k fall windows
 vs ~26k ADL windows), then converts it to TFLite with default (dynamic-range)
 quantization.
 
+## Architecture
+
+![Preprocessing pipeline and 1D-CNN architecture](results/architecture.png)
+
+Regenerate with `python3 plot_architecture.py`.
+
 ## Current results (subject-wise held-out test split)
 
 `evaluate.py` runs the bundled `.tflite` on the held-out test subjects (SA05,
