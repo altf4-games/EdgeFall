@@ -10,8 +10,13 @@ Flutter app's ml_fall_detector.dart, since the on-device model expects
 input features on the same scale it was trained on.
 """
 
+import json
 import pathlib
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -19,6 +24,7 @@ from tensorflow import keras
 DATA_PATH = pathlib.Path(__file__).parent / "data" / "windows.npz"
 OUTPUT_DIR = pathlib.Path(__file__).parent / "output"
 ASSET_DIR = pathlib.Path(__file__).parent.parent / "assets" / "model"
+RESULTS_DIR = pathlib.Path(__file__).parent / "results"
 
 WINDOW_SIZE = 100  # 2s @ 50Hz, must match prepare_dataset.py
 NUM_CHANNELS = 3  # accel_mag, gyro_mag, jerk
@@ -68,7 +74,25 @@ def build_model() -> keras.Model:
     return model
 
 
+def plot_history(history: dict) -> None:
+    """Save raw per-epoch history and loss/metric curves to results/."""
+    RESULTS_DIR.mkdir(exist_ok=True)
+    (RESULTS_DIR / "training_history.json").write_text(json.dumps(history, indent=2))
+    epochs = range(1, len(history["loss"]) + 1)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    for ax, key, title in zip(axes, ["loss", "precision", "recall"],
+                              ["Loss (class-weighted BCE)", "Precision", "Recall"]):
+        ax.plot(epochs, history[key], label="train")
+        ax.plot(epochs, history[f"val_{key}"], label="validation")
+        ax.set(xlabel="Epoch", title=title)
+        ax.legend()
+    fig.tight_layout()
+    fig.savefig(RESULTS_DIR / "training_curves.png", dpi=150)
+    plt.close(fig)
+
+
 def main() -> None:
+    keras.utils.set_random_seed(SEED)
     data = np.load(DATA_PATH)
     x, y, subjects = data["x"], data["y"], data["subjects"]
 
@@ -97,7 +121,7 @@ def main() -> None:
             restore_best_weights=True),
     ]
 
-    model.fit(
+    history = model.fit(
         x_train, y_train,
         validation_data=(x_val, y_val),
         epochs=50,
@@ -106,6 +130,8 @@ def main() -> None:
         callbacks=callbacks,
         verbose=2,
     )
+
+    plot_history({k: [float(v) for v in vals] for k, vals in history.history.items()})
 
     print("\nTest set evaluation:")
     results = model.evaluate(x_test, y_test, verbose=0, return_dict=True)

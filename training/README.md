@@ -62,6 +62,14 @@ SA06, SA23, SE05, SE07: 3611 windows, 225 falls) and writes everything to
 | 0.9 | 0.594 | 0.902 | 0.959 | 0.716 | 203 / 139 / 22 / 3247 |
 | 0.95 (app) | 0.617 | 0.809 | 0.967 | 0.700 | 182 / 113 / 43 / 3273 |
 
+Training curves are in `results/training_curves.png` (raw numbers in
+`results/training_history.json`). They come from a separate seeded re-run of
+`train.py` (early stopping halted at epoch 13 and restored the epoch-5
+weights, the best `val_recall`), not from the exact run that produced the
+bundled `.tflite`, whose history wasn't saved. Validation loss sits below
+train loss because the training loss is class-weighted (~14x on falls) while
+the validation loss is not.
+
 ROC AUC = 0.968, average precision = 0.504 (fall prevalence in the test set is
 only ~6%, which is why precision is modest despite high AUC).
 
