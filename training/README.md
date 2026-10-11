@@ -33,6 +33,7 @@ This produces `data/SisFall/dataset/SisFall_dataset/<SUBJECT_ID>/*.txt`.
 ```
 python3 prepare_dataset.py   # -> data/windows.npz
 python3 train.py             # -> output/fall_model.keras, ../assets/model/fall_model.tflite
+python3 evaluate.py          # -> results/ (metrics.json + plots)
 ```
 
 `prepare_dataset.py` converts raw ADXL345 accelerometer + ITG3200 gyroscope
@@ -49,6 +50,20 @@ vs ~26k ADL windows), then converts it to TFLite with default (dynamic-range)
 quantization.
 
 ## Current results (subject-wise held-out test split)
+
+`evaluate.py` runs the bundled `.tflite` on the held-out test subjects (SA05,
+SA06, SA23, SE05, SE07: 3611 windows, 225 falls) and writes everything to
+[`results/`](results/): `metrics.json`, `confusion_matrices.png`,
+`roc_pr_curves.png`, `score_distribution.png`.
+
+| Threshold | Precision | Recall | Specificity | F1 | TP / FP / FN / TN |
+|---|---|---|---|---|---|
+| 0.5 | 0.448 | 0.956 | 0.922 | 0.610 | 215 / 265 / 10 / 3121 |
+| 0.9 | 0.594 | 0.902 | 0.959 | 0.716 | 203 / 139 / 22 / 3247 |
+| 0.95 (app) | 0.617 | 0.809 | 0.967 | 0.700 | 182 / 113 / 43 / 3273 |
+
+ROC AUC = 0.968, average precision = 0.504 (fall prevalence in the test set is
+only ~6%, which is why precision is modest despite high AUC).
 
 At the operating point used in the app (`positiveThreshold = 0.9` in
 `lib/services/ml_fall_detector.dart`): recall ~90%, precision ~59% per
