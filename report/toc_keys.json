@@ -1,0 +1,99 @@
+{
+ "headings": [
+  "1. Introduction & problem statement",
+  "1.1 Background",
+  "1.2 Motivation",
+  "1.3 Objectives",
+  "2. Hardware & environment specifications",
+  "2.1 Edge device specifications",
+  "2.2 Software & framework stack",
+  "3. Methodology & model optimization pipeline",
+  "3.1 Baseline model selection",
+  "3.2 Model compression techniques",
+  "3.2.1 Structured pruning",
+  "3.2.2 Quantization technique",
+  "3.3 Compilation & execution engine",
+  "4. Performance & comparison analysis",
+  "4.1 Baseline AI vs. Edge AI comparative matrix",
+  "4.2 Compression & memory reduction metrics",
+  "4.3 Latency & accuracy trade-offs",
+  "5. Conclusion & future scope",
+  "5.1 Summary of results",
+  "5.2 Future improvements",
+  "5.3 GitHub link",
+  "5.4 Google Drive link with code",
+  "References"
+ ],
+ "figures": [
+  {
+   "key": "arch",
+   "text": "Figure 1: Preprocessing pipeline and 1D-CNN architecture"
+  },
+  {
+   "key": "curves",
+   "text": "Figure 2: Loss, precision and recall per epoch from the seeded re-run (best epoch 5 of 13)"
+  },
+  {
+   "key": "device",
+   "text": "Figure 3: Inference flow on the phone"
+  },
+  {
+   "key": "compress",
+   "text": "Figure 4: Size, latency and F1 for each variant (re-run model)"
+  },
+  {
+   "key": "cm",
+   "text": "Figure 5: Row-normalized confusion matrices of the shipped model"
+  },
+  {
+   "key": "roc",
+   "text": "Figure 6: ROC and precision-recall curves of the shipped model, with the three thresholds marked"
+  },
+  {
+   "key": "score",
+   "text": "Figure 7: Distribution of the shipped model's output on the test set (log scale)"
+  }
+ ],
+ "tables": [
+  {
+   "key": "device",
+   "text": "Table 1: Edge device used for EdgeFall"
+  },
+  {
+   "key": "stack",
+   "text": "Table 2: Software and framework stack"
+  },
+  {
+   "key": "dataset",
+   "text": "Table 3: SisFall as used in this project"
+  },
+  {
+   "key": "split",
+   "text": "Table 4: Subject-wise split of the 27,708 windows"
+  },
+  {
+   "key": "train",
+   "text": "Table 5: Training configuration"
+  },
+  {
+   "key": "prune",
+   "text": "Table 6: Effect of pruning half of the filters in each convolution layer"
+  },
+  {
+   "key": "matrix",
+   "text": "Table 7: Baseline AI compared with Edge AI (re-run model, threshold 0.9)"
+  },
+  {
+   "key": "compress",
+   "text": "Table 8: Model size after each compression step (re-run model)"
+  },
+  {
+   "key": "tradeoff",
+   "text": "Table 9: Accuracy and latency of each variant at threshold 0.9 (re-run model)"
+  },
+  {
+   "key": "thresholds",
+   "text": "Table 10: Shipped model on the 3,611 test windows at three thresholds"
+  }
+ ]
+}
