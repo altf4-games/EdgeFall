@@ -418,7 +418,8 @@ front.push(C("On-Device Fall Detection from Phone Accelerometer and Gyroscope Da
 front.push(new Paragraph({ border: { top: rule }, spacing: { after: 0 }, children: [] }));
 front.push(C("Edge AI Lab CA Mini Project Report", { size: 28, bold: true, before: 100, after: 100 }));
 front.push(new Paragraph({ border: { bottom: rule }, spacing: { after: 500 }, children: [] }));
-front.push(C("Submitted by", { size: 20, color: "444444", after: 100 }));
+front.push(C("Submitted by", { size: 20, color: "444444", after: 60 }));
+front.push(C("Team 14", { size: 26, bold: true, after: 100 }));
 for (const n of ["Pradyum Mistry", "Rayan Kokate", "Aryan Raut", "Satvik Gupta"]) front.push(C(n, { size: 26, bold: true, after: 40 }));
 front.push(C("", { after: 40 }));
 front.push(C("B.Tech Computer Engineering, Last Year"));
